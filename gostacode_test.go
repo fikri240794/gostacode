@@ -1,3 +1,4 @@
+// Package gostacode provides test coverage for HTTP to gRPC code conversion functions.
 package gostacode
 
 import (
@@ -7,6 +8,8 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
+// TestGRPCCodeFromHTTPStatusCode tests the conversion from HTTP status codes to gRPC codes.
+// It uses table-driven tests to verify correct mappings and edge cases.
 func TestGRPCCodeFromHTTPStatusCode(t *testing.T) {
 	var testCases []struct {
 		Name           string
@@ -92,6 +95,22 @@ func TestGRPCCodeFromHTTPStatusCode(t *testing.T) {
 			HTTPStatusCode: http.StatusGatewayTimeout,
 			Expectation:    codes.DeadlineExceeded,
 		},
+		// Additional edge cases for better coverage
+		{
+			Name:           "Zero HTTP status code",
+			HTTPStatusCode: 0,
+			Expectation:    codes.Unknown,
+		},
+		{
+			Name:           "Negative HTTP status code",
+			HTTPStatusCode: -1,
+			Expectation:    codes.Unknown,
+		},
+		{
+			Name:           "Invalid high HTTP status code",
+			HTTPStatusCode: 999,
+			Expectation:    codes.Unknown,
+		},
 	}
 
 	for i := range testCases {
@@ -105,6 +124,8 @@ func TestGRPCCodeFromHTTPStatusCode(t *testing.T) {
 	}
 }
 
+// TestHTTPStatusCodeFromGRPCCode tests the conversion from gRPC codes to HTTP status codes.
+// It uses table-driven tests to verify correct mappings and edge cases.
 func TestHTTPStatusCodeFromGRPCCode(t *testing.T) {
 	var testCases []struct {
 		Name        string
@@ -200,6 +221,12 @@ func TestHTTPStatusCodeFromGRPCCode(t *testing.T) {
 			GRPCCode:    codes.DataLoss,
 			Expectation: http.StatusInternalServerError,
 		},
+		// Additional edge case for better coverage
+		{
+			Name:        "Invalid gRPC code",
+			GRPCCode:    codes.Code(999), // Invalid code value for testing fallback
+			Expectation: http.StatusInternalServerError,
+		},
 	}
 
 	for i := range testCases {
@@ -210,5 +237,47 @@ func TestHTTPStatusCodeFromGRPCCode(t *testing.T) {
 				t.Errorf("expectation is %d, got %d", testCases[i].Expectation, actual)
 			}
 		})
+	}
+}
+
+// Benchmark tests for performance measurement
+
+// BenchmarkGRPCCodeFromHTTPStatusCode benchmarks the HTTP to gRPC code conversion function.
+// This helps measure performance impact of optimizations.
+func BenchmarkGRPCCodeFromHTTPStatusCode(b *testing.B) {
+	// Test with common HTTP status codes
+	httpCodes := []int{
+		http.StatusOK,
+		http.StatusBadRequest,
+		http.StatusNotFound,
+		http.StatusInternalServerError,
+		999, // Unmapped code to test fallback performance
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for _, code := range httpCodes {
+			_ = GRPCCodeFromHTTPStatusCode(code)
+		}
+	}
+}
+
+// BenchmarkHTTPStatusCodeFromGRPCCode benchmarks the gRPC to HTTP code conversion function.
+// This helps measure performance impact of optimizations.
+func BenchmarkHTTPStatusCodeFromGRPCCode(b *testing.B) {
+	// Test with common gRPC codes
+	grpcCodes := []codes.Code{
+		codes.OK,
+		codes.InvalidArgument,
+		codes.NotFound,
+		codes.Internal,
+		codes.Code(999), // Unmapped code to test fallback performance
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for _, code := range grpcCodes {
+			_ = HTTPStatusCodeFromGRPCCode(code)
+		}
 	}
 }
