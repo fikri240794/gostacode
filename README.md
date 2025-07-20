@@ -1,6 +1,6 @@
 # GoStaCode
 
-Go library for bidirectional conversion between HTTP status codes and gRPC status codes. Perfect for microservices architectures, API gateways, and protocol translation layers.
+Go library for bidirectional conversion between HTTP status codes and gRPC status codes.
 
 ## 🚀 Features
 
